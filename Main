@@ -1,0 +1,98 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+
+
+class PassengerThread implements Runnable {
+    private static int AllPassengers ;
+    private static int AllAverage ;
+
+
+    private String filename;
+
+
+    public PassengerThread(String s) {
+        this.filename = s;
+    }
+    String getName() {return filename;}
+
+    void mySleep (int time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    public void run( ) {
+
+        HashMap<String, Object> results = new HashMap<String, Object>();
+        results.put("Total Passengers", null);
+        results.put("Avg Passengers", null);
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filename+ ".csv"));
+            String line = reader.readLine();
+
+            int passengerNumber = 0;
+            int tripNumber = 0;
+            int days = 0;
+
+            while ((line = reader.readLine()) != null) {
+
+                String[] x = line.split(",");
+                int trips = Integer.parseInt(x[2]);
+                int passengers = Integer.parseInt(x[3]);
+
+                tripNumber += trips;
+                passengerNumber += passengers;
+                days++;
+
+                AllPassengers += passengers;
+
+            }
+
+            double averagePassengers = (double) passengerNumber / days;
+            AllAverage += averagePassengers;
+
+            results.put("Total Passengers", passengerNumber);
+            results.put("Avg Passengers", averagePassengers);
+
+            System.out.printf("%-15s%-23d%-15.2f\n", filename, results.get("Total Passengers"), results.get("Avg Passengers"));
+
+
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+
+
+    public static void main(String[] args) {
+        String[] districts = {"Konak", "Karsiyaka","Seferihisar","Balcova", "Urla" ,"Gaziemir", "Karabaglar","Bornova",  };
+        System.out.println("District       Total Passengers      Avg Passengers");
+        System.out.println("--------       ----------------      --------------");
+
+
+
+
+
+
+        for (int i = 0; i < districts.length; i++) {
+            String district = districts[i];
+
+            Thread tx = new Thread(new PassengerThread(district));
+            tx.start();
+
+
+        }
+
+       // System.out.printf("%-15s%-23d%-15.2f\n", "All passengers", PassengerThread.getAllPassengers());
+        // Though I think I calculated them Im not sure how can I get or print allpassengers yet
+
+    }
+}
