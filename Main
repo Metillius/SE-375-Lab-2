@@ -1,37 +1,26 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
 class PassengerThread implements Runnable {
-    private static int AllPassengers ;
-    private static int AllAverage ;
-
-
     private String filename;
+    private HashMap<String, int[]> districtPassengerCount;
 
-
-    public PassengerThread(String s) {
+    public PassengerThread(String s, HashMap<String, int[]> districtPassengerCount) {
         this.filename = s;
+        this.districtPassengerCount = districtPassengerCount;
     }
-    String getName() {return filename;}
 
-    void mySleep (int time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-    public void run( ) {
+    public void run() {
 
-        HashMap<String, Object> results = new HashMap<String, Object>();
-        results.put("Total Passengers", null);
-        results.put("Avg Passengers", null);
+        ArrayList <String> CaptainKiddArr = new ArrayList<String>();
+
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(filename+ ".csv"));
+            BufferedReader reader = new BufferedReader(new FileReader(filename + ".csv"));
             String line = reader.readLine();
 
             int passengerNumber = 0;
@@ -47,52 +36,51 @@ class PassengerThread implements Runnable {
                 tripNumber += trips;
                 passengerNumber += passengers;
                 days++;
-
-                AllPassengers += passengers;
-
             }
 
             double averagePassengers = (double) passengerNumber / days;
-            AllAverage += averagePassengers;
 
-            results.put("Total Passengers", passengerNumber);
-            results.put("Avg Passengers", averagePassengers);
+            CaptainKiddArr.add(String.valueOf(passengerNumber));
+            CaptainKiddArr.add(String.valueOf(averagePassengers));
 
-            System.out.printf("%-15s%-23d%-15.2f\n", filename, results.get("Total Passengers"), results.get("Avg Passengers"));
 
+            System.out.println(filename + " Total Passengers: " + passengerNumber + " Avg Passengers: "+ averagePassengers);
+
+
+            int[] counts = new int[] {passengerNumber, (int) Math.round(averagePassengers)};
+            districtPassengerCount.put(filename, counts);
 
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
+}
 
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        String[] districts = {"Konak", "Karsiyaka","Seferihisar","Balcova", "Urla" ,"Gaziemir", "Karabaglar","Bornova"};
+        HashMap<String, int[]> districtPassengerCount = new HashMap<>();
 
+        ArrayList<Thread> threads = new ArrayList<>();
 
+        for (String district : districts) {
+            Thread t = new Thread(new PassengerThread(district, districtPassengerCount));
+            threads.add(t);
+            t.start();
+        }
 
-    public static void main(String[] args) {
-        String[] districts = {"Konak", "Karsiyaka","Seferihisar","Balcova", "Urla" ,"Gaziemir", "Karabaglar","Bornova",  };
+        // Wait for all threads to finish
+        for (Thread t : threads) {
+            t.join();
+        }
+
         System.out.println("District       Total Passengers      Avg Passengers");
         System.out.println("--------       ----------------      --------------");
 
-
-
-
-
-
-        for (int i = 0; i < districts.length; i++) {
-            String district = districts[i];
-
-            Thread tx = new Thread(new PassengerThread(district));
-            tx.start();
-
-
+        for (String district : districtPassengerCount.keySet()) {
+            int[] counts = districtPassengerCount.get(district);
+            System.out.printf("%-15s%-23d%-15d\n", district, counts[0], counts[1]);
         }
-
-       // System.out.printf("%-15s%-23d%-15.2f\n", "All passengers", PassengerThread.getAllPassengers());
-        // Though I think I calculated them Im not sure how can I get or print allpassengers yet
-
     }
 }
